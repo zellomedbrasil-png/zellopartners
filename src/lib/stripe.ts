@@ -1,7 +1,9 @@
 import Stripe from 'stripe';
 
 // Server-side Stripe client
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+// Prevent build failure if key is missing (fallback to mock)
+const stripeKey = process.env.STRIPE_SECRET_KEY || 'sk_test_mock_key_for_build';
+export const stripe = new Stripe(stripeKey, {
     typescript: true,
 });
 
