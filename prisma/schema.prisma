@@ -3,8 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model Seller {
@@ -13,7 +14,7 @@ model Seller {
   whatsapp      String
   pixKey        String   @map("pix_key")
   couponCode    String   @unique @map("coupon_code")
-  walletBalance Decimal  @default(0.00) @map("wallet_balance")
+  walletBalance Decimal  @default(0.00) @map("wallet_balance") @db.Decimal(10, 2)
   createdAt     DateTime @default(now()) @map("created_at")
 
   sales       SalesLog[]
@@ -28,10 +29,10 @@ model SalesLog {
   id               String   @id @default(uuid())
   sellerId         String   @map("seller_id")
   consultationType String   @map("consultation_type")
-  saleValue        Decimal  @map("sale_value")
-  commissionAmount Decimal  @map("commission_amount")
+  saleValue        Decimal  @map("sale_value") @db.Decimal(10, 2)
+  commissionAmount Decimal  @map("commission_amount") @db.Decimal(10, 2)
   status           String   @default("confirmado")
-  source           String   @default("stripe") // stripe, pix
+  source           String   @default("stripe")
   createdAt        DateTime @default(now()) @map("created_at")
 
   seller Seller @relation(fields: [sellerId], references: [id])
@@ -44,8 +45,8 @@ model SalesLog {
 model Withdrawal {
   id          String    @id @default(uuid())
   sellerId    String    @map("seller_id")
-  amount      Decimal
-  status      String    @default("pendente") // pendente, aprovado, pago, rejeitado
+  amount      Decimal   @db.Decimal(10, 2)
+  status      String    @default("pendente")
   proofUrl    String?   @map("proof_url")
   requestedAt DateTime  @default(now()) @map("requested_at")
   approvedAt  DateTime? @map("approved_at")
@@ -63,15 +64,15 @@ model PixOrder {
   orderId          String    @unique @map("order_id")
   productId        String    @map("product_id")
   productName      String    @map("product_name")
-  originalPrice    Decimal   @map("original_price")
-  discountAmount   Decimal   @map("discount_amount")
-  finalPrice       Decimal   @map("final_price")
+  originalPrice    Decimal   @map("original_price") @db.Decimal(10, 2)
+  discountAmount   Decimal   @map("discount_amount") @db.Decimal(10, 2)
+  finalPrice       Decimal   @map("final_price") @db.Decimal(10, 2)
   customerEmail    String    @map("customer_email")
   customerName     String?   @map("customer_name")
   sellerId         String?   @map("seller_id")
   couponCode       String?   @map("coupon_code")
-  commissionAmount Decimal?  @map("commission_amount")
-  status           String    @default("pendente") // pendente, confirmado, cancelado
+  commissionAmount Decimal?  @map("commission_amount") @db.Decimal(10, 2)
+  status           String    @default("pendente")
   createdAt        DateTime  @default(now()) @map("created_at")
   confirmedAt      DateTime? @map("confirmed_at")
 
