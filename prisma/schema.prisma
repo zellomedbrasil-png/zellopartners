@@ -1,0 +1,83 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Seller {
+  id            String   @id @default(uuid())
+  name          String
+  whatsapp      String
+  pixKey        String   @map("pix_key")
+  couponCode    String   @unique @map("coupon_code")
+  walletBalance Decimal  @default(0.00) @map("wallet_balance")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  sales       SalesLog[]
+  withdrawals Withdrawal[]
+  pixOrders   PixOrder[]
+
+  @@map("sellers")
+  @@index([couponCode])
+}
+
+model SalesLog {
+  id               String   @id @default(uuid())
+  sellerId         String   @map("seller_id")
+  consultationType String   @map("consultation_type")
+  saleValue        Decimal  @map("sale_value")
+  commissionAmount Decimal  @map("commission_amount")
+  status           String   @default("confirmado")
+  source           String   @default("stripe") // stripe, pix
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  seller Seller @relation(fields: [sellerId], references: [id])
+
+  @@map("sales_log")
+  @@index([sellerId])
+  @@index([createdAt])
+}
+
+model Withdrawal {
+  id          String    @id @default(uuid())
+  sellerId    String    @map("seller_id")
+  amount      Decimal
+  status      String    @default("pendente") // pendente, aprovado, pago, rejeitado
+  proofUrl    String?   @map("proof_url")
+  requestedAt DateTime  @default(now()) @map("requested_at")
+  approvedAt  DateTime? @map("approved_at")
+  paidAt      DateTime? @map("paid_at")
+
+  seller Seller @relation(fields: [sellerId], references: [id])
+
+  @@map("withdrawals")
+  @@index([sellerId])
+  @@index([status])
+}
+
+model PixOrder {
+  id               String    @id @default(uuid())
+  orderId          String    @unique @map("order_id")
+  productId        String    @map("product_id")
+  productName      String    @map("product_name")
+  originalPrice    Decimal   @map("original_price")
+  discountAmount   Decimal   @map("discount_amount")
+  finalPrice       Decimal   @map("final_price")
+  customerEmail    String    @map("customer_email")
+  customerName     String?   @map("customer_name")
+  sellerId         String?   @map("seller_id")
+  couponCode       String?   @map("coupon_code")
+  commissionAmount Decimal?  @map("commission_amount")
+  status           String    @default("pendente") // pendente, confirmado, cancelado
+  createdAt        DateTime  @default(now()) @map("created_at")
+  confirmedAt      DateTime? @map("confirmed_at")
+
+  seller Seller? @relation(fields: [sellerId], references: [id])
+
+  @@map("pix_orders")
+  @@index([status])
+  @@index([createdAt])
+}
