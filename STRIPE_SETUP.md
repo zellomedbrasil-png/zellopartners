@@ -8,14 +8,14 @@ O ZelloPartners suporta dois métodos de pagamento:
 
 Quando um cliente compra usando um cupom de parceiro:
 - Recebe **R$ 5,00 de desconto** fixo
-- O parceiro recebe **5% de comissão** sobre o valor final
+- O parceiro recebe **10% de comissão** sobre o valor final
 
 ## Produtos e Preços
 
-| Produto | Preço Normal | Com Cupom | Comissão (5%) |
-|---------|--------------|-----------|---------------|
-| Consulta Generalista | R$ 47,00 | R$ 42,00 | R$ 2,10 |
-| Consulta Especialista | R$ 79,00 | R$ 74,00 | R$ 3,70 |
+| Produto | Preço Normal | Com Cupom | Comissão (10%) |
+|---------|--------------|-----------|----------------|
+| Consulta Generalista | R$ 47,00 | R$ 42,00 | R$ 4,70 |
+| Consulta Especialista | R$ 79,00 | R$ 74,00 | R$ 7,90 |
 
 ## Fluxo - Cartão (Stripe)
 

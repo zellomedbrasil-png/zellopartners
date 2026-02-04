@@ -49,13 +49,38 @@ export default function CheckoutPage() {
     const [pixData, setPixData] = useState<{ code: string, orderId: string } | null>(null);
     const [copied, setCopied] = useState(false);
 
-    const selectedProductData = PRODUCTS.find(p => p.id === selectedProduct);
+    const [isValidatingCoupon, setIsValidatingCoupon] = useState(false);
+    const [couponError, setCouponError] = useState("");
 
+    const selectedProductData = PRODUCTS.find(p => p.id === selectedProduct);
     const discount = couponApplied ? COUPON_DISCOUNT : 0;
 
-    const handleApplyCoupon = () => {
-        if (couponCode.trim()) {
-            setCouponApplied(true);
+    const handleApplyCoupon = async () => {
+        if (!couponCode.trim()) return;
+
+        setIsValidatingCoupon(true);
+        setCouponError("");
+
+        try {
+            const res = await fetch('/api/validate-coupon', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ couponCode })
+            });
+
+            const data = await res.json();
+
+            if (data.valid) {
+                setCouponApplied(true);
+                setCouponCode(data.couponCode); // Ensure correct format
+            } else {
+                setCouponApplied(false);
+                setCouponError(data.message || "Cupom inválido");
+            }
+        } catch (err) {
+            setCouponError("Erro ao validar cupom");
+        } finally {
+            setIsValidatingCoupon(false);
         }
     };
 
@@ -131,6 +156,9 @@ export default function CheckoutPage() {
         if (!selectedProductData) return 0;
         return selectedProductData.price - discount;
     };
+
+    // Rule: If user has typed a coupon (length > 0) AND it is NOT applied/valid, disable payment.
+    const isPaymentDisabled = loading || !customerEmail || (couponCode.length > 0 && !couponApplied);
 
     // PIX Generated - Show PIX Code
     if (pixData) {
@@ -354,24 +382,30 @@ export default function CheckoutPage() {
                                         onChange={(e) => {
                                             setCouponCode(e.target.value.toUpperCase());
                                             setCouponApplied(false);
+                                            setCouponError("");
                                         }}
                                         placeholder="Ex: ZELLOMARCOS"
-                                        disabled={couponApplied}
+                                        disabled={couponApplied || isValidatingCoupon}
                                     />
                                     <Button
                                         type="button"
                                         variant="outline"
                                         onClick={handleApplyCoupon}
-                                        disabled={couponApplied || !couponCode.trim()}
+                                        disabled={couponApplied || !couponCode.trim() || isValidatingCoupon}
                                     >
-                                        <Tag className="w-4 h-4 mr-2" />
+                                        {isValidatingCoupon ? <Loader2 className="w-4 h-4 animate-spin" /> : <Tag className="w-4 h-4 mr-2" />}
                                         {couponApplied ? "Aplicado!" : "Aplicar"}
                                     </Button>
                                 </div>
+                                {couponError && (
+                                    <p className="text-sm text-red-500 mt-1">
+                                        ❌ {couponError}
+                                    </p>
+                                )}
                                 {couponApplied && (
-                                    <p className="text-sm text-green-600 flex items-center gap-1">
+                                    <p className="text-sm text-green-600 flex items-center gap-1 mt-1">
                                         <CheckCircle2 className="w-4 h-4" />
-                                        Cupom aplicado! Você ganhou R$ 5,00 de desconto.
+                                        Cupom oficial verificado! Desconto de R$ 5,00 aplicado.
                                     </p>
                                 )}
                             </div>
@@ -397,7 +431,7 @@ export default function CheckoutPage() {
                         <CardFooter>
                             <Button
                                 onClick={handleCheckout}
-                                disabled={loading || !customerEmail}
+                                disabled={isPaymentDisabled}
                                 className={`w-full h-12 text-lg font-bold ${paymentMethod === 'pix'
                                     ? 'bg-green-600 hover:bg-green-700'
                                     : 'bg-blue-600 hover:bg-blue-700'
