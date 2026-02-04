@@ -65,9 +65,8 @@ export async function POST(request: Request) {
         });
 
         // Generate PIX code for customer
-        // Key: zellomed@jim.com
-        // Note: CRC 6304 is static here. In production, use a library like CRC-16/CCITT-FALSE to calculate the last 4 characters.
-        const pixCode = `00020126580014br.gov.bcb.pix0136zellomed@jim.com5204000053039865404${(finalPrice / 100).toFixed(2)}5802BR5907ZELLOMED6008SAO PAULO62140510${orderId.slice(-10)}6304`;
+        // As requested: showing ONLY the email key
+        const pixCode = 'zellomed@jim.com';
 
         return NextResponse.json({
             success: true,
