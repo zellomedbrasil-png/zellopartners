@@ -51,6 +51,7 @@ export default function CheckoutPage() {
 
     const [isValidatingCoupon, setIsValidatingCoupon] = useState(false);
     const [couponError, setCouponError] = useState("");
+    const [sellerId, setSellerId] = useState<string | null>(null);
 
     const selectedProductData = PRODUCTS.find(p => p.id === selectedProduct);
     const discount = couponApplied ? COUPON_DISCOUNT : 0;
@@ -73,6 +74,7 @@ export default function CheckoutPage() {
             if (data.valid) {
                 setCouponApplied(true);
                 setCouponCode(data.couponCode); // Ensure correct format
+                setSellerId(data.sellerId); // Track seller for commission
             } else {
                 setCouponApplied(false);
                 setCouponError(data.message || "Cupom inválido");
@@ -103,26 +105,33 @@ export default function CheckoutPage() {
 
         try {
             if (paymentMethod === 'card') {
-                // Stripe Checkout
-                const response = await fetch("/api/stripe/create-checkout", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        productId: selectedProduct,
-                        couponCode: couponApplied ? couponCode : null,
-                        customerEmail,
-                        customerName,
-                    }),
-                });
+                // Use Static Stripe Payment Links
+                // Generalista: https://buy.stripe.com/28E3cudHpaWz7S92UP5Ne00
+                // Especialista: https://buy.stripe.com/eVq6oGeLtfcPgoF52X5Ne01
 
-                if (!response.ok) {
-                    const err = await response.json();
-                    throw new Error(err.error || "Erro ao processar");
+                let paymentUrl = '';
+
+                if (selectedProduct === 'consulta-generalista') {
+                    paymentUrl = 'https://buy.stripe.com/28E3cudHpaWz7S92UP5Ne00';
+                } else if (selectedProduct === 'consulta-especialista') {
+                    paymentUrl = 'https://buy.stripe.com/eVq6oGeLtfcPgoF52X5Ne01';
                 }
 
-                const { url } = await response.json();
-                if (url) {
-                    window.location.href = url;
+                if (paymentUrl) {
+                    // Append paramters for tracking
+                    // client_reference_id = sellerId (for commission)
+                    // prefilled_email = customerEmail
+
+                    const params = new URLSearchParams();
+                    params.append('prefilled_email', customerEmail);
+
+                    if (sellerId) {
+                        params.append('client_reference_id', sellerId);
+                    }
+
+                    window.location.href = `${paymentUrl}?${params.toString()}`;
+                } else {
+                    setError("Erro ao gerar link de pagamento.");
                 }
             } else {
                 // PIX Payment

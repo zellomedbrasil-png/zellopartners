@@ -14,7 +14,11 @@ export async function POST(request: Request) {
         });
 
         if (seller) {
-            return NextResponse.json({ valid: true, couponCode: seller.couponCode });
+            return NextResponse.json({
+                valid: true,
+                couponCode: seller.couponCode,
+                sellerId: seller.id // Changed: Returning sellerId for checkout tracking
+            });
         } else {
             return NextResponse.json({ valid: false, message: 'Cupom inválido ou não encontrado' });
         }
